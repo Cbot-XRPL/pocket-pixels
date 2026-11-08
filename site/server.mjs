@@ -27,6 +27,7 @@ const MIME = {
   ".svg": "image/svg+xml",
 };
 
+// Keyed by combo + layer file mtimes, so editing a PNG invalidates its renders.
 const renderCache = new Map();
 
 async function manifestInfo() {
@@ -99,7 +100,8 @@ const server = http.createServer(async (req, res) => {
         if (!trait || !m.layers[layer].traits[trait]) return send(res, 400, `missing or unknown trait for layer "${layer}"`, "text/plain");
         combo[layer] = trait;
       }
-      const key = m.order.map((l) => combo[l]).join("/");
+      const stamps = await Promise.all(m.order.map((l) => stat(layerPath(l, combo[l])).then((s) => s.mtimeMs)));
+      const key = m.order.map((l) => combo[l]).join("/") + "@" + stamps.join(",");
       let png = renderCache.get(key);
       if (!png) {
         png = await render(m, combo);

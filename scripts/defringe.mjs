@@ -42,7 +42,34 @@ for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
   if (found === null) { data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0; cleared++; continue; }
   data[i] = (found >> 16) & 255; data[i + 1] = (found >> 8) & 255; data[i + 2] = found & 255; data[i + 3] = 255; snapped++;
 }
-console.log(`${trait}: ${cleared} edge pixels cleared, ${snapped} snapped to a neighbour colour`);
+// Pass 2: the outermost OPAQUE ring. A cut-out from white also leaves fully
+// opaque edge pixels that are the outline colour mixed with white (one pixel
+// deep). Any edge pixel clearly lighter than the pixel two steps inward along
+// its outward normal takes that inward colour.
+const pass1 = Buffer.from(data);
+const lum = (b, i) => (b[i] + b[i + 1] + b[i + 2]) / 3;
+let ringed = 0;
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+  const i = at(x, y);
+  if (pass1[i + 3] !== 255) continue;
+  let out = null;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const nx = x + dx, ny = y + dy;
+    if (nx < 0 || ny < 0 || nx >= W || ny >= H || pass1[at(nx, ny) + 3] === 0) { out = [dx, dy]; break; }
+  }
+  if (!out) continue;
+  let ref = null;
+  for (const k of [2, 1]) {
+    const rx = x - out[0] * k, ry = y - out[1] * k;
+    if (rx < 0 || ry < 0 || rx >= W || ry >= H) continue;
+    const j = at(rx, ry);
+    if (pass1[j + 3] === 255) { ref = j; break; }
+  }
+  if (ref === null || lum(pass1, i) - lum(pass1, ref) < 25) continue;
+  data[i] = pass1[ref]; data[i + 1] = pass1[ref + 1]; data[i + 2] = pass1[ref + 2];
+  ringed++;
+}
+console.log(`${trait}: ${cleared} edge pixels cleared, ${snapped} snapped to a neighbour colour, ${ringed} light rim pixels darkened`);
 if (!flags.includes("--dry")) {
   await writeFile(file, await sharp(data, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer());
   console.log("wrote", file);
