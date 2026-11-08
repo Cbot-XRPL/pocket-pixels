@@ -1,0 +1,21 @@
+{
+  "canvas": 1024,
+  "order": ["background", "character"],
+  "layers": {
+    "background": {
+      "fit": "fill",
+      "traits": {
+        "ink-blue": "Ink Blue",
+        "ink-glow-soft": "Ink Glow (soft)",
+        "ink-glow-grid": "Ink Glow (grid)"
+      }
+    },
+    "character": {
+      "fit": "contain",
+      "scale": 0.76,
+      "traits": {
+        "squid": "Squid"
+      }
+    }
+  }
+}

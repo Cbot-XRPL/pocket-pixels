@@ -1,0 +1,14 @@
+{
+  "name": "pocket-pixels",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pocket Pixels: a pixel-art NFT collection built from layered PNG traits.",
+  "type": "module",
+  "scripts": {
+    "compose": "node scripts/compose.mjs",
+    "compose:all": "node scripts/compose.mjs --all"
+  },
+  "dependencies": {
+    "sharp": "^0.33.5"
+  }
+}
