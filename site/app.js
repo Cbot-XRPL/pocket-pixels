@@ -66,7 +66,7 @@ for (const layer of info.layers) {
         type: "button", class: "chip", "data-layer": layer.name, "data-trait": t.key, "aria-pressed": "false",
         onclick: () => { pick[layer.name] = t.key; updatePreview(); },
       },
-        el("img", { src: t.file, alt: "", width: 44, height: 44, loading: "lazy" }),
+        el("img", { src: t.file, alt: "", width: 44, height: 44, loading: "lazy", class: layer.fit === "contain" ? "clear" : "" }),
         el("span", {}, el("span", { class: "name" }, t.name), el("br"), el("span", { class: "odds" }, `${pct(t.pct)} · w${t.weight}`))))));
   controls.append(block);
 }
@@ -91,7 +91,7 @@ info.layers.forEach((layer, i) => {
     el("table", {},
       el("thead", {}, el("tr", {}, el("th", {}, ""), el("th", {}, "Trait"), el("th", {}, "Key"), el("th", { class: "num" }, "Weight"), el("th", { class: "num" }, "Odds"), el("th", {}, ""), el("th", {}, "Size"), el("th", {}, "File"))),
       el("tbody", {}, layer.traits.map((t) => el("tr", {},
-        el("td", {}, el("img", { src: t.file, alt: "", width: 32, height: 32, loading: "lazy" })),
+        el("td", {}, el("img", { src: t.file, alt: "", width: 32, height: 32, loading: "lazy", class: layer.fit === "contain" ? "clear" : "" })),
         el("td", {}, t.name),
         el("td", {}, el("code", {}, t.key)),
         el("td", { class: "num" }, t.weight),

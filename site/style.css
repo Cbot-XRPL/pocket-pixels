@@ -87,6 +87,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 500; letter-spacing: 0.01em
 .chip:hover { border-color: #2c3a5c; }
 .chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .chip img { width: 44px; height: 44px; border-radius: 8px; background: var(--plate); object-fit: contain; }
+/* Transparent layers (characters) preview on a clear surface, not the plate. */
+.chip img.clear, td img.clear { background: transparent; border: 1px solid var(--line); }
 .chip .name { font-size: 0.9375rem; line-height: 1.25; }
 .chip .odds { color: var(--muted); font-size: 0.75rem; }
 
