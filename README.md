@@ -21,6 +21,7 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | `scripts/compose.mjs`      | Composites a character onto a background into `out/`.  |
 | `scripts/generate.mjs`     | Builds the collection: weighted draws, PNG + metadata. |
 | `scripts/lib/compose.mjs`  | Shared renderer used by both scripts.                  |
+| `site/`                    | Home page: gallery, builder, layer info, collection.   |
 | `examples/`                | Reference renders checked in for the README.           |
 
 ## Backgrounds
@@ -30,6 +31,18 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | `ink-blue`      | Flat `#0F3D8A` plate. The official one.                |
 | `ink-glow-soft` | Dark ink navy, soft turquoise glow lower right.        |
 | `ink-glow-grid` | Dark ink navy, turquoise glow, faint pixel grid.       |
+
+## Home page
+
+```sh
+npm run dev        # http://127.0.0.1:4610  (PORT overrides)
+```
+
+A single dark page served by `site/server.mjs`: the example renders, a live
+trait builder that uses the same compositor as the generator, every layer
+and trait with its weight, odds and file, and the last generated collection
+with a Generate button. All URLs are relative, so it also works behind the
+CCLU preview proxy.
 
 ## Render
 

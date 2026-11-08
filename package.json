@@ -5,6 +5,7 @@
   "description": "Pocket Pixels: a pixel-art NFT collection built from layered PNG traits.",
   "type": "module",
   "scripts": {
+    "dev": "node site/server.mjs",
     "compose": "node scripts/compose.mjs",
     "compose:all": "node scripts/compose.mjs --all",
     "generate": "node scripts/generate.mjs"

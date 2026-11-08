@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Pixels</title>
+<link rel="icon" type="image/png" href="examples/squid-on-ink-blue.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="#"><img src="examples/squid-on-ink-blue.png" alt="" width="40" height="40"><span>Pocket Pixels</span></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#examples">Examples</a>
+    <a href="#builder">Builder</a>
+    <a href="#layers">Layers</a>
+    <a href="#collection">Collection</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Pixel-art NFT collection</p>
+    <h1>Pocket Pixels</h1>
+    <p class="lede" id="lede">Layered PNG traits, composited with nearest-neighbour scaling so every pixel stays square.</p>
+    <dl class="stats" id="stats" aria-live="polite">
+      <div><dt>Layers</dt><dd data-stat="layers">–</dd></div>
+      <div><dt>Traits</dt><dd data-stat="traits">–</dd></div>
+      <div><dt>Unique combos</dt><dd data-stat="unique">–</dd></div>
+      <div><dt>Canvas</dt><dd data-stat="canvas">–</dd></div>
+    </dl>
+  </section>
+
+  <section id="examples" class="section">
+    <div class="section-head"><h2>Examples</h2><p>Reference renders checked into the repo.</p></div>
+    <div class="grid gallery" id="gallery"></div>
+  </section>
+
+  <section id="builder" class="section">
+    <div class="section-head"><h2>Builder</h2><p>Pick a trait per layer. The preview is rendered by the same compositor that builds the collection.</p></div>
+    <div class="builder">
+      <div class="preview-col">
+        <div class="preview-frame"><img id="preview" alt="Live preview of the selected traits" width="1024" height="1024"></div>
+        <div class="preview-actions">
+          <a class="btn primary" id="download" href="#" download><span>Download PNG</span></a>
+          <button class="btn" id="random" type="button"><span>Random</span></button>
+        </div>
+      </div>
+      <div class="controls" id="controls"></div>
+    </div>
+    <details class="meta">
+      <summary>Token metadata for this combo</summary>
+      <pre id="metadata"></pre>
+    </details>
+  </section>
+
+  <section id="layers" class="section">
+    <div class="section-head"><h2>Layers &amp; traits</h2><p>Order is bottom to top. Weight is relative within a layer and sets the draw odds.</p></div>
+    <div id="layer-tables"></div>
+  </section>
+
+  <section id="collection" class="section">
+    <div class="section-head"><h2>Collection</h2><p>The last run of <code>npm run generate</code>. Builds are local and gitignored.</p></div>
+    <form class="gen" id="gen-form">
+      <label>Count <input type="number" name="count" min="1" step="1" placeholder="all"></label>
+      <label>Seed <input type="number" name="seed" min="0" step="1" value="1"></label>
+      <button class="btn primary" type="submit" id="gen-btn"><span>Generate</span></button>
+      <output id="gen-status"></output>
+    </form>
+    <div id="collection-body" class="collection-body"></div>
+  </section>
+</main>
+
+<footer class="foot"><span>Pocket Pixels</span><span>Dark, premium, restrained. One accent colour per piece.</span></footer>
+<script src="app.js" type="module"></script>
+</body>
+</html>
