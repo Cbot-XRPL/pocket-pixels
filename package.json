@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "compose": "node scripts/compose.mjs",
-    "compose:all": "node scripts/compose.mjs --all"
+    "compose:all": "node scripts/compose.mjs --all",
+    "generate": "node scripts/generate.mjs"
   },
   "dependencies": {
     "sharp": "^0.33.5"

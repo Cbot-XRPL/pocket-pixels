@@ -1,20 +1,25 @@
 {
   "canvas": 1024,
   "order": ["background", "character"],
+  "collection": {
+    "name": "Pocket Pixels",
+    "description": "A pixel-art NFT collection built from layered PNG traits. Dark, premium, restrained: crisp square pixels, one accent colour per piece.",
+    "namePattern": "Pocket Pixel #{id}"
+  },
   "layers": {
     "background": {
       "fit": "fill",
       "traits": {
-        "ink-blue": "Ink Blue",
-        "ink-glow-soft": "Ink Glow (soft)",
-        "ink-glow-grid": "Ink Glow (grid)"
+        "ink-blue": { "name": "Ink Blue", "weight": 60 },
+        "ink-glow-soft": { "name": "Ink Glow (soft)", "weight": 25 },
+        "ink-glow-grid": { "name": "Ink Glow (grid)", "weight": 15 }
       }
     },
     "character": {
       "fit": "contain",
       "scale": 0.76,
       "traits": {
-        "squid": "Squid"
+        "squid": { "name": "Squid", "weight": 100 }
       }
     }
   }
