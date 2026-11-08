@@ -43,33 +43,42 @@ for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
   data[i] = (found >> 16) & 255; data[i + 1] = (found >> 8) & 255; data[i + 2] = found & 255; data[i + 3] = 255; snapped++;
 }
 // Pass 2: the outermost OPAQUE ring. A cut-out from white also leaves fully
-// opaque edge pixels that are the outline colour mixed with white (one pixel
-// deep). Any edge pixel clearly lighter than the pixel two steps inward along
-// its outward normal takes that inward colour.
+// opaque edge pixels that are the outline colour mixed with white, one pixel
+// deep, including pixels that touch transparency only at a corner. The whole
+// 8-connected ring is unreliable, so every ring pixel takes the majority
+// colour of the nearest non-ring opaque pixels (3x3, then 5x5, then 7x7).
 const pass1 = Buffer.from(data);
-const lum = (b, i) => (b[i] + b[i + 1] + b[i + 2]) / 3;
-let ringed = 0;
+const ring = new Uint8Array(W * H);
 for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-  const i = at(x, y);
-  if (pass1[i + 3] !== 255) continue;
-  let out = null;
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+  if (pass1[at(x, y) + 3] !== 255) continue;
+  outer: for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    if (!dx && !dy) continue;
     const nx = x + dx, ny = y + dy;
-    if (nx < 0 || ny < 0 || nx >= W || ny >= H || pass1[at(nx, ny) + 3] === 0) { out = [dx, dy]; break; }
+    if (nx < 0 || ny < 0 || nx >= W || ny >= H || pass1[at(nx, ny) + 3] === 0) { ring[y * W + x] = 1; break outer; }
   }
-  if (!out) continue;
-  let ref = null;
-  for (const k of [2, 1]) {
-    const rx = x - out[0] * k, ry = y - out[1] * k;
-    if (rx < 0 || ry < 0 || rx >= W || ry >= H) continue;
-    const j = at(rx, ry);
-    if (pass1[j + 3] === 255) { ref = j; break; }
+}
+let ringed = 0, ringCleared = 0;
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+  if (!ring[y * W + x]) continue;
+  const i = at(x, y);
+  let found = null;
+  for (let r = 1; r <= 3 && found === null; r++) {
+    const votes = new Map();
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      if (ring[ny * W + nx] || pass1[at(nx, ny) + 3] !== 255) continue;
+      const j = at(nx, ny);
+      const k = (pass1[j] << 16) | (pass1[j + 1] << 8) | pass1[j + 2];
+      votes.set(k, (votes.get(k) ?? 0) + 1);
+    }
+    if (votes.size) found = [...votes.entries()].sort((p, q) => q[1] - p[1])[0][0];
   }
-  if (ref === null || lum(pass1, i) - lum(pass1, ref) < 25) continue;
-  data[i] = pass1[ref]; data[i + 1] = pass1[ref + 1]; data[i + 2] = pass1[ref + 2];
+  if (found === null) { data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 0; ringCleared++; continue; }
+  data[i] = (found >> 16) & 255; data[i + 1] = (found >> 8) & 255; data[i + 2] = found & 255;
   ringed++;
 }
-console.log(`${trait}: ${cleared} edge pixels cleared, ${snapped} snapped to a neighbour colour, ${ringed} light rim pixels darkened`);
+console.log(`${trait}: ${cleared} edge pixels cleared, ${snapped} snapped to a neighbour colour, ${ringed} ring pixels recoloured, ${ringCleared} isolated ring pixels dropped`);
 if (!flags.includes("--dry")) {
   await writeFile(file, await sharp(data, { raw: { width: W, height: H, channels: 4 } }).png().toBuffer());
   console.log("wrote", file);
