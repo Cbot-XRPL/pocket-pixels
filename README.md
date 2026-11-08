@@ -20,6 +20,7 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | `layers/layers.json`       | Layer order, trait names, character scale.             |
 | `scripts/compose.mjs`      | Composites a character onto a background into `out/`.  |
 | `scripts/generate.mjs`     | Builds the collection: weighted draws, PNG + metadata. |
+| `scripts/recolor.mjs`      | Makes a colour variant of a character by hue remap.    |
 | `scripts/lib/compose.mjs`  | Shared renderer used by both scripts.                  |
 | `site/`                    | Home page: gallery, builder, layer info, collection.   |
 | `examples/`                | Reference renders checked in for the README.           |
@@ -82,6 +83,24 @@ the same collection. `--count` is capped at the number of unique combos.
 
 New layers (hats, eyes, held items) go in `order` bottom to top with
 `"fit": "contain"` and a `scale`.
+
+### Colour variants
+
+```sh
+node scripts/recolor.mjs squid squid-gold --hue 45 --light 1.14   # shift the accent hue
+node scripts/recolor.mjs squid squid-grey --sat 0.05 --light 1.05  # desaturate
+```
+
+Only pixels in the source's accent hue band (`--range`, default 150-205 for
+the turquoise squid) change, so eyes, suckers and outlines stay put.
+
+## Characters
+
+| Trait        | Weight | Look                                   |
+| ------------ | ------ | -------------------------------------- |
+| `squid`      | 70     | The original turquoise `#2EE6D6` squid. |
+| `squid-grey` | 20     | Desaturated slate grey.                |
+| `squid-gold` | 10     | Warm gold, the rare one.               |
 
 ## Style rules
 
