@@ -21,6 +21,7 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | `scripts/compose.mjs`      | Composites a character onto a background into `out/`.  |
 | `scripts/generate.mjs`     | Builds the collection: weighted draws, PNG + metadata. |
 | `scripts/recolor.mjs`      | Makes a colour variant of a character by hue remap.    |
+| `scripts/defringe.mjs`     | Removes white matte fringe, hardens a character's edge.|
 | `scripts/lib/compose.mjs`  | Shared renderer used by both scripts.                  |
 | `site/`                    | Home page: gallery, builder, layer info, collection.   |
 | `examples/`                | Reference renders checked in for the README.           |
@@ -83,6 +84,16 @@ the same collection. `--count` is capped at the number of unique combos.
 
 New layers (hats, eyes, held items) go in `order` bottom to top with
 `"fit": "contain"` and a `scale`.
+
+### Clean edges
+
+```sh
+node scripts/defringe.mjs <trait>   # drop faint edge pixels, snap the rest to a solid neighbour
+```
+
+Run this once on any character cut out from a white background; otherwise a
+pale rim shows on dark plates. Pixel art has no anti-aliasing, so the edge
+should be hard.
 
 ### Colour variants
 

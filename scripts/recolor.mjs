@@ -4,14 +4,14 @@
 //   node scripts/recolor.mjs squid squid-grey --sat 0.06 --light 1.0
 //
 // Only pixels whose hue falls inside --range (default the squid's turquoise
-// band, 150-205 degrees) are touched; cream suckers, eyes and outlines stay.
+// band, 120-230 degrees) are touched; cream suckers, eyes and outlines stay.
 import { writeFile } from "node:fs/promises";
 import sharp from "sharp";
 import { layerPath } from "./lib/compose.mjs";
 
 const [src, dst, ...rest] = process.argv.slice(2);
 if (!src || !dst) {
-  console.error("usage: node scripts/recolor.mjs <source-trait> <new-trait> [--hue H] [--sat S] [--light L] [--range 150-205]");
+  console.error("usage: node scripts/recolor.mjs <source-trait> <new-trait> [--hue H] [--sat S] [--light L] [--range 120-230]");
   process.exit(1);
 }
 const opt = {};
@@ -19,7 +19,7 @@ for (let i = 0; i < rest.length; i += 2) opt[rest[i].replace(/^--/, "")] = rest[
 const hue = opt.hue !== undefined ? Number(opt.hue) : null;
 const sat = opt.sat !== undefined ? Number(opt.sat) : 1;
 const light = opt.light !== undefined ? Number(opt.light) : 1;
-const [lo, hi] = (opt.range ?? "150-205").split("-").map(Number);
+const [lo, hi] = (opt.range ?? "120-230").split("-").map(Number);
 
 const { data, info } = await sharp(layerPath("character", src)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
@@ -40,7 +40,11 @@ let touched = 0;
 for (let i = 0; i < data.length; i += 4) {
   if (data[i + 3] === 0) continue;
   let [h, s, l] = rgb2hsl(data[i], data[i + 1], data[i + 2]);
-  if (s < 0.12 || h < lo || h > hi) continue;
+  // Accent band, plus any tinted near-white highlight: those carry a trace of
+  // the source hue and read as mint specks on a recoloured body.
+  const inBand = h >= lo && h <= hi;
+  const tintedHighlight = l > 0.85 && s > 0.03;
+  if (s < 0.04 || (!inBand && !tintedHighlight)) continue;
   if (hue !== null) h = hue;
   s = Math.min(1, s * sat);
   l = Math.min(1, l * light);
