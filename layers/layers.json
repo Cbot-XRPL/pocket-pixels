@@ -39,7 +39,8 @@
             "hat": {
               "x": 578,
               "y": 150,
-              "w": 360
+              "w": 360,
+              "rotate": 22
             }
           }
         },
@@ -50,7 +51,9 @@
             "hat": {
               "x": 489,
               "y": 137,
-              "w": 470
+              "w": 470,
+              "scale": 0.8,
+              "overlap": 0.3
             }
           }
         },
@@ -61,7 +64,8 @@
             "hat": {
               "x": 578,
               "y": 150,
-              "w": 360
+              "w": 360,
+              "rotate": 22
             }
           }
         },
@@ -72,7 +76,8 @@
             "hat": {
               "x": 578,
               "y": 150,
-              "w": 360
+              "w": 360,
+              "rotate": 22
             }
           }
         }
@@ -97,5 +102,5 @@
       }
     }
   },
-  "anchorsNote": "Anchors are in the trait image's own pixels. Accessory layers use fit:'anchor' with anchor:'hat' and on:'character'; the accessory is scaled to anchor.w * widthScale and its bottom edge sits at anchor.y, sunk by overlap of its height."
+  "anchorsNote": "Anchors are in the trait image's own pixels: x,y = seat point (brim centre), w = head width. Optional per-anchor overrides: rotate (degrees, clockwise), scale (multiplies the layer widthScale), overlap (replaces the layer overlap). Accessory layers use fit:'anchor', anchor:'<name>', on:'<layer>'."
 }

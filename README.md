@@ -152,7 +152,11 @@ the turquoise squid) change, so eyes, suckers and outlines stay put.
 | `beanie` | 40     | Navy knit beanie, turquoise brim stripe, cream pom. |
 
 Hats sit on each character's `hat` anchor (width ×1.1, sunk 28% of their
-height), so the same PNG fits the squid's mantle and the robot's head.
+height), so the same PNG fits the squid's mantle and the robot's head. An
+anchor can override the fit per character: `rotate` (degrees, clockwise; the
+squid's is 22 so hats lean back with the mantle), `scale` (the robot's is 0.8
+so hats stay in proportion to its boxy head) and `overlap`. Rotation samples
+nearest-neighbour, so edges stay hard.
 Characters are drawn at 72% of the canvas and nudged down 6% to leave headroom.
 
 ![squid in a beanie](examples/squid-beanie-on-ink-blue.png)

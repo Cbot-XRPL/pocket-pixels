@@ -68,18 +68,36 @@ export async function render(manifest, combo) {
       const hostPlace = placed[host];
       if (!anchor || !hostPlace) continue; // host absent or has no such anchor: skip the accessory
       const meta = await sharp(file).metadata();
-      const width = Math.round(anchor.w * hostPlace.k * (cfg.widthScale ?? 1.15));
+      const width = Math.round(anchor.w * hostPlace.k * (cfg.widthScale ?? 1.15) * (anchor.scale ?? 1));
       const height = Math.round(meta.height * (width / meta.width));
-      const cx = hostPlace.left + anchor.x * hostPlace.k;
-      const bottom = hostPlace.top + anchor.y * hostPlace.k + height * (cfg.overlap ?? 0.15);
+      const overlap = anchor.overlap ?? cfg.overlap ?? 0.15;
+      // Seat point S on the accessory (bottom-centre, raised by overlap) lands on the anchor A.
+      const ax = hostPlace.left + anchor.x * hostPlace.k, ay = hostPlace.top + anchor.y * hostPlace.k;
       let img = sharp(await sharp(file).resize(width, height, { fit: "fill", kernel: "nearest" }).toBuffer());
-      let left = Math.round(cx - width / 2), top = Math.round(bottom - height);
+      let left, top;
+      const deg = anchor.rotate ?? 0;
+      if (deg) {
+        // Rotate about the image centre with nearest-neighbour sampling so pixels stay hard.
+        const r = (deg * Math.PI) / 180, c = Math.cos(r), sn = Math.sin(r);
+        img = sharp(await img.affine([[c, -sn], [sn, c]], { background: { r: 0, g: 0, b: 0, alpha: 0 }, interpolator: sharp.interpolators.nearest }).png().toBuffer());
+        const rm = await img.metadata();
+        // S relative to centre, rotated (y down, clockwise-positive to match the on-screen tilt)
+        const sx = 0, sy = height * (0.5 - overlap);
+        const rx = sx * c - sy * sn, ry = sx * sn + sy * c;
+        left = Math.round(ax - rm.width / 2 - rx);
+        top = Math.round(ay - rm.height / 2 - ry);
+        var ow = rm.width, oh = rm.height;
+      } else {
+        left = Math.round(ax - width / 2);
+        top = Math.round(ay + height * overlap - height);
+        var ow = width, oh = height;
+      }
       // Clip to the canvas: sharp refuses overlays that hang past the edge.
       const cl = Math.max(0, -left), ct = Math.max(0, -top);
-      const cw = Math.min(width - cl, size - Math.max(0, left)), ch = Math.min(height - ct, size - Math.max(0, top));
+      const cw = Math.min(ow - cl, size - Math.max(0, left)), ch = Math.min(oh - ct, size - Math.max(0, top));
       if (cw <= 0 || ch <= 0) continue;
-      if (cl || ct || cw !== width || ch !== height) img = img.extract({ left: cl, top: ct, width: cw, height: ch });
-      overlays.push({ input: await img.toBuffer(), left: Math.max(0, left), top: Math.max(0, top) });
+      if (cl || ct || cw !== ow || ch !== oh) img = img.extract({ left: cl, top: ct, width: cw, height: ch });
+      overlays.push({ input: await img.png().toBuffer(), left: Math.max(0, left), top: Math.max(0, top) });
       continue;
     }
     if (cfg.fit === "contain") {
