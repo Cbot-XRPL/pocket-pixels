@@ -40,11 +40,39 @@
     <div class="section-head"><h2>Builder</h2><p>Pick a trait per layer. The preview is rendered by the same compositor that builds the collection.</p></div>
     <div class="builder">
       <div class="preview-col">
-        <div class="preview-frame"><img id="preview" alt="Live preview of the selected traits" width="1024" height="1024"></div>
+        <div class="preview-frame">
+          <div class="stage" id="stage">
+            <img id="preview" alt="Live preview of the selected traits" width="1024" height="1024">
+            <div class="fit-layer" id="fit-layer" hidden>
+              <div class="fit-item" id="fit-item">
+                <img id="fit-img" alt="" draggable="false">
+                <button class="handle rotate" id="h-rotate" type="button" aria-label="Rotate"></button>
+                <button class="handle scale" id="h-scale" type="button" aria-label="Resize"></button>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="preview-actions">
           <a class="btn primary" id="download" href="#" download><span>Download PNG</span></a>
           <button class="btn" id="random" type="button"><span>Random</span></button>
+          <button class="btn" id="fit-toggle" type="button" hidden><span>Adjust fit</span></button>
         </div>
+        <form class="fit-panel" id="fit-panel" hidden>
+          <p class="fit-title" id="fit-title"></p>
+          <p class="fit-help">Drag the hat to move it, the corner to resize, the knob to rotate. Saved fits apply to this asset on this character everywhere.</p>
+          <div class="fit-fields">
+            <label>X <input type="number" name="x" step="1"></label>
+            <label>Y <input type="number" name="y" step="1"></label>
+            <label>Scale <input type="number" name="scale" step="0.01" min="0.1"></label>
+            <label>Rotate <input type="number" name="rotate" step="0.5"></label>
+          </div>
+          <div class="fit-actions">
+            <button class="btn primary" type="submit" id="fit-save"><span>Save fit</span></button>
+            <button class="btn" type="button" id="fit-reset"><span>Reset to anchor</span></button>
+            <button class="btn" type="button" id="fit-cancel"><span>Cancel</span></button>
+            <output id="fit-status"></output>
+          </div>
+        </form>
       </div>
       <div class="controls" id="controls"></div>
     </div>

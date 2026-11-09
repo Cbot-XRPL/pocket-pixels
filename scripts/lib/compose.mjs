@@ -41,6 +41,54 @@ export function placement(manifest, layer, meta) {
 }
 
 /**
+ * Where an anchor-fit accessory lands, as an UNROTATED box centred at (cx, cy)
+ * that is then rotated `deg` clockwise about its centre. Combines the host
+ * anchor (x, y, w + optional rotate/scale/overlap) with the accessory trait's
+ * saved per-character fit ({ x, y, scale, rotate } under trait.fit[character]).
+ * `placed` must already hold the host layer's placement(). Null if the host
+ * is absent or lacks the anchor.
+ */
+export async function anchorBox(manifest, layer, trait, combo, placed) {
+  const cfg = manifest.layers[layer];
+  const host = cfg.on ?? "character";
+  const hostTrait = manifest.layers[host]?.traits[combo[host]];
+  const anchor = hostTrait?.anchors?.[cfg.anchor];
+  const hostPlace = placed[host];
+  if (!anchor || !hostPlace) return null;
+  const meta = await sharp(layerPath(layer, trait)).metadata();
+  const fit = manifest.layers[layer].traits[trait]?.fit?.[combo[host]] ?? {};
+  const width = Math.max(4, Math.round(anchor.w * hostPlace.k * (cfg.widthScale ?? 1.15) * (anchor.scale ?? 1) * (fit.scale ?? 1)));
+  const height = Math.max(4, Math.round(meta.height * (width / meta.width)));
+  const overlap = anchor.overlap ?? cfg.overlap ?? 0.15;
+  const deg = (anchor.rotate ?? 0) + (fit.rotate ?? 0);
+  // Seat point S (bottom-centre raised by overlap) sits on the anchor A; the
+  // box centre is A minus S rotated. Saved fit offsets then nudge the centre.
+  const ax = hostPlace.left + anchor.x * hostPlace.k, ay = hostPlace.top + anchor.y * hostPlace.k;
+  const r = (deg * Math.PI) / 180, c = Math.cos(r), sn = Math.sin(r);
+  const sy = height * (0.5 - overlap);
+  const cx = ax - (-sy * sn) + (fit.x ?? 0);
+  const cy = ay - sy * c + (fit.y ?? 0);
+  return { cx, cy, width, height, deg, host, hostTrait: combo[host], anchor: cfg.anchor, fit };
+}
+
+/**
+ * The placement of every layer in a combo without rendering: fill layers,
+ * contain layers (placement()) and anchor layers (anchorBox()).
+ */
+export async function plan(manifest, combo) {
+  const out = {}, placed = {};
+  for (const layer of manifest.order) {
+    const cfg = manifest.layers[layer];
+    const trait = combo[layer];
+    if (!trait || trait === NONE) { out[layer] = null; continue; }
+    if (cfg.fit === "anchor") out[layer] = await anchorBox(manifest, layer, trait, combo, placed);
+    else if (cfg.fit === "contain") { const p = placement(manifest, layer, await sharp(layerPath(layer, trait)).metadata()); placed[layer] = p; out[layer] = p; }
+    else out[layer] = { left: 0, top: 0, width: manifest.canvas, height: manifest.canvas };
+  }
+  return out;
+}
+
+/**
  * Render a combo ({ background: "ink-blue", character: "squid", hat: "none" })
  * to a PNG buffer, following manifest.order bottom to top.
  *  - fill:    stretched to the canvas (backgrounds)
@@ -62,36 +110,19 @@ export async function render(manifest, combo) {
     if (!trait || trait === NONE) continue;
     const file = layerPath(layer, trait);
     if (cfg.fit === "anchor") {
-      const host = cfg.on ?? "character";
-      const hostTrait = manifest.layers[host]?.traits[combo[host]];
-      const anchor = hostTrait?.anchors?.[cfg.anchor];
-      const hostPlace = placed[host];
-      if (!anchor || !hostPlace) continue; // host absent or has no such anchor: skip the accessory
-      const meta = await sharp(file).metadata();
-      const width = Math.round(anchor.w * hostPlace.k * (cfg.widthScale ?? 1.15) * (anchor.scale ?? 1));
-      const height = Math.round(meta.height * (width / meta.width));
-      const overlap = anchor.overlap ?? cfg.overlap ?? 0.15;
-      // Seat point S on the accessory (bottom-centre, raised by overlap) lands on the anchor A.
-      const ax = hostPlace.left + anchor.x * hostPlace.k, ay = hostPlace.top + anchor.y * hostPlace.k;
+      const box = await anchorBox(manifest, layer, trait, combo, placed);
+      if (!box) continue; // host absent or has no such anchor: skip the accessory
+      const { cx, cy, width, height, deg } = box;
       let img = sharp(await sharp(file).resize(width, height, { fit: "fill", kernel: "nearest" }).toBuffer());
-      let left, top;
-      const deg = anchor.rotate ?? 0;
+      let ow = width, oh = height;
       if (deg) {
         // Rotate about the image centre with nearest-neighbour sampling so pixels stay hard.
         const r = (deg * Math.PI) / 180, c = Math.cos(r), sn = Math.sin(r);
         img = sharp(await img.affine([[c, -sn], [sn, c]], { background: { r: 0, g: 0, b: 0, alpha: 0 }, interpolator: sharp.interpolators.nearest }).png().toBuffer());
         const rm = await img.metadata();
-        // S relative to centre, rotated (y down, clockwise-positive to match the on-screen tilt)
-        const sx = 0, sy = height * (0.5 - overlap);
-        const rx = sx * c - sy * sn, ry = sx * sn + sy * c;
-        left = Math.round(ax - rm.width / 2 - rx);
-        top = Math.round(ay - rm.height / 2 - ry);
-        var ow = rm.width, oh = rm.height;
-      } else {
-        left = Math.round(ax - width / 2);
-        top = Math.round(ay + height * overlap - height);
-        var ow = width, oh = height;
+        ow = rm.width; oh = rm.height;
       }
+      let left = Math.round(cx - ow / 2), top = Math.round(cy - oh / 2);
       // Clip to the canvas: sharp refuses overlays that hang past the edge.
       const cl = Math.max(0, -left), ct = Math.max(0, -top);
       const cw = Math.min(ow - cl, size - Math.max(0, left)), ch = Math.min(oh - ct, size - Math.max(0, top));

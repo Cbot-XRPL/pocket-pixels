@@ -6,13 +6,15 @@
 // Every URL the page uses is relative so it works behind the CCLU preview
 // proxy (/preview/<id>/) as well as at the root.
 import http from "node:http";
-import { readFile, stat, readdir } from "node:fs/promises";
+import { readFile, writeFile, stat, readdir } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { loadManifest, render, layerPath, root, NONE } from "../scripts/lib/compose.mjs";
+import { loadManifest, render, plan, layerPath, root, NONE } from "../scripts/lib/compose.mjs";
+
+const MANIFEST = path.join(root, "layers/layers.json");
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT ?? 4610);
@@ -47,7 +49,7 @@ async function manifestInfo() {
           dims = { width: meta.width, height: meta.height };
         } catch {}
       }
-      traits.push({ key, name: t.name, weight: t.weight, pct: (t.weight / total) * 100, file, dims, anchors: t.anchors ?? null });
+      traits.push({ key, name: t.name, weight: t.weight, pct: (t.weight / total) * 100, file, dims, anchors: t.anchors ?? null, fit: t.fit ?? null });
     }
     unique *= traits.length;
     layers.push({ name, fit: cfg.fit, scale: cfg.scale ?? 1, anchor: cfg.anchor ?? null, on: cfg.on ?? null, widthScale: cfg.widthScale ?? null, overlap: cfg.overlap ?? null, traits, totalWeight: total });
@@ -85,6 +87,17 @@ async function sendFile(res, abs) {
 // Only serve files from these roots, never anything else on disk.
 const PUBLIC = { "examples/": path.join(root, "examples"), "layers/": path.join(root, "layers"), "build/images/": path.join(root, "build/images"), "build/metadata/": path.join(root, "build/metadata") };
 
+function parseCombo(m, params) {
+  const combo = {};
+  for (const layer of m.order) {
+    const trait = params.get(layer) ?? (m.layers[layer].traits[NONE] ? NONE : null);
+    if (!trait || !m.layers[layer].traits[trait]) return `missing or unknown trait for layer "${layer}"`;
+    combo[layer] = trait;
+  }
+  return combo;
+}
+const readBody = (req) => new Promise((resolve, reject) => { let b = ""; req.on("data", (d) => (b += d)); req.on("end", () => resolve(b)); req.on("error", reject); });
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
   const p = url.pathname.replace(/^\/+/, "");
@@ -95,15 +108,43 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && p === "api/manifest") return send(res, 200, JSON.stringify(await manifestInfo()));
     if (req.method === "GET" && p === "api/collection") return send(res, 200, JSON.stringify(await collectionInfo()));
 
+    if (req.method === "GET" && p === "api/place") {
+      const m = await loadManifest();
+      const combo = parseCombo(m, url.searchParams);
+      if (typeof combo === "string") return send(res, 400, combo, "text/plain");
+      return send(res, 200, JSON.stringify({ canvas: m.canvas, layers: await plan(m, combo) }));
+    }
+
+    // Save how one accessory trait sits on one character: { layer, trait, character, fit: { x, y, scale, rotate } | null }
+    if (req.method === "POST" && p === "api/fit") {
+      const body = JSON.parse(await readBody(req) || "{}");
+      const raw = JSON.parse(await readFile(MANIFEST, "utf8"));
+      const layer = raw.layers[body.layer], traitRaw = layer?.traits?.[body.trait];
+      const host = layer?.on ?? "character";
+      if (!layer || layer.fit !== "anchor" || !traitRaw || typeof traitRaw !== "object") return send(res, 400, "unknown anchor layer/trait", "text/plain");
+      if (!raw.layers[host]?.traits?.[body.character]) return send(res, 400, `unknown ${host} "${body.character}"`, "text/plain");
+      traitRaw.fit ??= {};
+      if (body.fit == null) delete traitRaw.fit[body.character];
+      else {
+        const f = body.fit;
+        const clean = {};
+        if (Math.round(f.x ?? 0)) clean.x = Math.round(f.x);
+        if (Math.round(f.y ?? 0)) clean.y = Math.round(f.y);
+        if (Math.abs((f.scale ?? 1) - 1) > 0.001) clean.scale = Math.round(f.scale * 1000) / 1000;
+        if (Math.abs(f.rotate ?? 0) > 0.05) clean.rotate = Math.round(f.rotate * 10) / 10;
+        if (Object.keys(clean).length) traitRaw.fit[body.character] = clean; else delete traitRaw.fit[body.character];
+      }
+      if (!Object.keys(traitRaw.fit).length) delete traitRaw.fit;
+      await writeFile(MANIFEST, JSON.stringify(raw, null, 2) + "\n");
+      renderCache.clear();
+      return send(res, 200, JSON.stringify({ ok: true, fit: traitRaw.fit?.[body.character] ?? null }));
+    }
+
     if (req.method === "GET" && p === "render") {
       const m = await loadManifest();
-      const combo = {};
-      for (const layer of m.order) {
-        const trait = url.searchParams.get(layer);
-        if (!trait || !m.layers[layer].traits[trait]) return send(res, 400, `missing or unknown trait for layer "${layer}"`, "text/plain");
-        combo[layer] = trait;
-      }
-      const stamps = await Promise.all(m.order.map((l) => (combo[l] === NONE ? Promise.resolve(0) : stat(layerPath(l, combo[l])).then((s) => s.mtimeMs))));
+      const combo = parseCombo(m, url.searchParams);
+      if (typeof combo === "string") return send(res, 400, combo, "text/plain");
+      const stamps = await Promise.all([stat(MANIFEST).then((s) => s.mtimeMs), ...m.order.map((l) => (combo[l] === NONE ? Promise.resolve(0) : stat(layerPath(l, combo[l])).then((s) => s.mtimeMs)))]);
       const key = m.order.map((l) => combo[l]).join("/") + "@" + stamps.join(",");
       let png = renderCache.get(key);
       if (!png) {
