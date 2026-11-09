@@ -11,7 +11,7 @@ import { layerPath } from "./lib/compose.mjs";
 
 const [src, dst, ...rest] = process.argv.slice(2);
 if (!src || !dst) {
-  console.error("usage: node scripts/recolor.mjs <source-trait> <new-trait> [--hue H] [--sat S] [--light L] [--range 120-230]");
+  console.error("usage: node scripts/recolor.mjs <source-trait> <new-trait> [--hue H] [--sat S] [--light L] [--range 120-230] [--highlights 0]");
   process.exit(1);
 }
 const opt = {};
@@ -20,6 +20,7 @@ const hue = opt.hue !== undefined ? Number(opt.hue) : null;
 const sat = opt.sat !== undefined ? Number(opt.sat) : 1;
 const light = opt.light !== undefined ? Number(opt.light) : 1;
 const [lo, hi] = (opt.range ?? "120-230").split("-").map(Number);
+const highlights = opt.highlights === undefined ? true : opt.highlights !== "0";
 
 const { data, info } = await sharp(layerPath("character", src)).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
@@ -43,7 +44,7 @@ for (let i = 0; i < data.length; i += 4) {
   // Accent band, plus any tinted near-white highlight: those carry a trace of
   // the source hue and read as mint specks on a recoloured body.
   const inBand = h >= lo && h <= hi;
-  const tintedHighlight = l > 0.85 && s > 0.03;
+  const tintedHighlight = highlights && l > 0.85 && s > 0.03;
   if (s < 0.04 || (!inBand && !tintedHighlight)) continue;
   if (hue !== null) h = hue;
   s = Math.min(1, s * sat);

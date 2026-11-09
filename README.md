@@ -22,6 +22,8 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | `scripts/generate.mjs`     | Builds the collection: weighted draws, PNG + metadata. |
 | `scripts/recolor.mjs`      | Makes a colour variant of a character by hue remap.    |
 | `scripts/defringe.mjs`     | Removes white matte fringe, hardens a character's edge.|
+| `scripts/cutout.mjs`       | Keys a flat-colour background out of a drawn character. |
+| `scripts/anchors.mjs`      | Debug sheet: every character with its anchors drawn.   |
 | `scripts/lib/compose.mjs`  | Shared renderer used by both scripts.                  |
 | `site/`                    | Home page: gallery, builder, layer info, collection.   |
 | `examples/`                | Reference renders checked in for the README.           |
@@ -85,6 +87,32 @@ the same collection. `--count` is capped at the number of unique combos.
 New layers (hats, eyes, held items) go in `order` bottom to top with
 `"fit": "contain"` and a `scale`.
 
+### New character from a drawing
+
+```sh
+cclu draw --engine grok --ar 1:1 "<pixel-art character> ... flat solid magenta #FF00FF background"
+node scripts/cutout.mjs <image> <trait>     # key out the background, crop, square
+node scripts/defringe.mjs <trait>           # always
+```
+
+Then give it anchors (below) and a weight in `layers/layers.json`.
+
+### Anchors: accessories that fit every character
+
+Each character trait carries `anchors` in its own image pixels, e.g.
+`"hat": { "x": 578, "y": 150, "w": 360 }`: the centre and width of where a hat
+brim sits. An accessory layer declares
+
+```json
+"hat": { "fit": "anchor", "anchor": "hat", "on": "character", "widthScale": 1.15, "overlap": 0.15,
+         "traits": { "none": { "name": "None", "weight": 70 }, "beanie": { "name": "Beanie", "weight": 30 } } }
+```
+
+and the compositor scales it to the host's anchor width and sets its bottom
+edge on the anchor line, so one hat PNG fits the squid and the robot alike.
+The trait key `none` means the layer is absent. `node scripts/anchors.mjs`
+renders `out/anchors.png` to eyeball the anchors on every character.
+
 ### Clean edges
 
 ```sh
@@ -109,9 +137,10 @@ the turquoise squid) change, so eyes, suckers and outlines stay put.
 
 | Trait        | Weight | Look                                   |
 | ------------ | ------ | -------------------------------------- |
-| `squid`      | 70     | The original turquoise `#2EE6D6` squid. |
-| `squid-grey` | 20     | Desaturated slate grey.                |
+| `squid`      | 45     | The original turquoise `#2EE6D6` squid. |
+| `squid-grey` | 15     | Desaturated slate grey.                |
 | `squid-gold` | 10     | Warm gold, the rare one.               |
+| `robot`      | 30     | Boxy turquoise robot, same palette.    |
 
 ## Style rules
 

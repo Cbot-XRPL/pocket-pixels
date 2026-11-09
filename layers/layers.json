@@ -33,17 +33,50 @@
       "traits": {
         "squid": {
           "name": "Squid",
-          "weight": 70
+          "weight": 45,
+          "anchors": {
+            "hat": {
+              "x": 578,
+              "y": 150,
+              "w": 360
+            }
+          }
+        },
+        "robot": {
+          "name": "Robot",
+          "weight": 30,
+          "anchors": {
+            "hat": {
+              "x": 488,
+              "y": 197,
+              "w": 470
+            }
+          }
         },
         "squid-grey": {
           "name": "Grey Squid",
-          "weight": 20
+          "weight": 15,
+          "anchors": {
+            "hat": {
+              "x": 578,
+              "y": 150,
+              "w": 360
+            }
+          }
         },
         "squid-gold": {
           "name": "Gold Squid",
-          "weight": 10
+          "weight": 10,
+          "anchors": {
+            "hat": {
+              "x": 578,
+              "y": 150,
+              "w": 360
+            }
+          }
         }
       }
     }
-  }
+  },
+  "anchorsNote": "Anchors are in the trait image's own pixels. Accessory layers use fit:'anchor' with anchor:'hat' and on:'character'; the accessory is scaled to anchor.w * widthScale and its bottom edge sits at anchor.y, sunk by overlap of its height."
 }
