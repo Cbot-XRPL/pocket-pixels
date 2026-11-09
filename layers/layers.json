@@ -2,7 +2,8 @@
   "canvas": 1024,
   "order": [
     "background",
-    "character"
+    "character",
+    "hat"
   ],
   "collection": {
     "name": "Pocket Pixels",
@@ -29,7 +30,7 @@
     },
     "character": {
       "fit": "contain",
-      "scale": 0.76,
+      "scale": 0.72,
       "traits": {
         "squid": {
           "name": "Squid",
@@ -47,8 +48,8 @@
           "weight": 30,
           "anchors": {
             "hat": {
-              "x": 488,
-              "y": 197,
+              "x": 489,
+              "y": 137,
               "w": 470
             }
           }
@@ -74,6 +75,24 @@
               "w": 360
             }
           }
+        }
+      },
+      "offsetY": 0.06
+    },
+    "hat": {
+      "fit": "anchor",
+      "anchor": "hat",
+      "on": "character",
+      "widthScale": 1.1,
+      "overlap": 0.28,
+      "traits": {
+        "none": {
+          "name": "None",
+          "weight": 60
+        },
+        "beanie": {
+          "name": "Beanie",
+          "weight": 40
         }
       }
     }

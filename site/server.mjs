@@ -12,7 +12,7 @@ import { promisify } from "node:util";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { loadManifest, render, layerPath, root } from "../scripts/lib/compose.mjs";
+import { loadManifest, render, layerPath, root, NONE } from "../scripts/lib/compose.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT ?? 4610);
@@ -40,14 +40,17 @@ async function manifestInfo() {
     const traits = [];
     for (const [key, t] of Object.entries(cfg.traits)) {
       let dims = null;
-      try {
-        const meta = await sharp(layerPath(name, key)).metadata();
-        dims = { width: meta.width, height: meta.height };
-      } catch {}
-      traits.push({ key, name: t.name, weight: t.weight, pct: (t.weight / total) * 100, file: `layers/${name}/${key}.png`, dims });
+      const file = key === NONE ? null : `layers/${name}/${key}.png`;
+      if (file) {
+        try {
+          const meta = await sharp(layerPath(name, key)).metadata();
+          dims = { width: meta.width, height: meta.height };
+        } catch {}
+      }
+      traits.push({ key, name: t.name, weight: t.weight, pct: (t.weight / total) * 100, file, dims, anchors: t.anchors ?? null });
     }
     unique *= traits.length;
-    layers.push({ name, fit: cfg.fit, scale: cfg.scale ?? 1, traits, totalWeight: total });
+    layers.push({ name, fit: cfg.fit, scale: cfg.scale ?? 1, anchor: cfg.anchor ?? null, on: cfg.on ?? null, widthScale: cfg.widthScale ?? null, overlap: cfg.overlap ?? null, traits, totalWeight: total });
   }
   const examples = (await readdir(path.join(root, "examples")).catch(() => []))
     .filter((f) => f.endsWith(".png"))
@@ -100,7 +103,7 @@ const server = http.createServer(async (req, res) => {
         if (!trait || !m.layers[layer].traits[trait]) return send(res, 400, `missing or unknown trait for layer "${layer}"`, "text/plain");
         combo[layer] = trait;
       }
-      const stamps = await Promise.all(m.order.map((l) => stat(layerPath(l, combo[l])).then((s) => s.mtimeMs)));
+      const stamps = await Promise.all(m.order.map((l) => (combo[l] === NONE ? Promise.resolve(0) : stat(layerPath(l, combo[l])).then((s) => s.mtimeMs))));
       const key = m.order.map((l) => combo[l]).join("/") + "@" + stamps.join(",");
       let png = renderCache.get(key);
       if (!png) {

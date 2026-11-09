@@ -60,13 +60,13 @@ function updatePreview() {
 }
 for (const layer of info.layers) {
   const block = el("div", { class: "layer-block" },
-    el("h3", {}, title(layer.name), el("small", {}, `${layer.fit}${layer.fit === "contain" ? ` · ${Math.round(layer.scale * 100)}%` : ""} · ${layer.traits.length} trait${layer.traits.length === 1 ? "" : "s"}`)),
+    el("h3", {}, title(layer.name), el("small", {}, `${layer.fit}${layer.fit === "contain" ? ` · ${Math.round(layer.scale * 100)}%` : layer.fit === "anchor" ? ` · on ${layer.on} ${layer.anchor}` : ""} · ${layer.traits.length} trait${layer.traits.length === 1 ? "" : "s"}`)),
     el("div", { class: "chips", role: "group", "aria-label": `${title(layer.name)} traits` },
       layer.traits.map((t) => el("button", {
         type: "button", class: "chip", "data-layer": layer.name, "data-trait": t.key, "aria-pressed": "false",
         onclick: () => { pick[layer.name] = t.key; updatePreview(); },
       },
-        el("img", { src: t.file, alt: "", width: 44, height: 44, loading: "lazy", class: layer.fit === "contain" ? "clear" : "" }),
+        t.file ? el("img", { src: t.file, alt: "", width: 44, height: 44, loading: "lazy", class: layer.fit !== "fill" ? "clear" : "" }) : el("span", { class: "chip-none", "aria-hidden": "true" }, "–"),
         el("span", {}, el("span", { class: "name" }, t.name), el("br"), el("span", { class: "odds" }, `${pct(t.pct)} · w${t.weight}`))))));
   controls.append(block);
 }
@@ -87,18 +87,19 @@ info.layers.forEach((layer, i) => {
       el("h3", {}, `${i + 1}. ${title(layer.name)}`),
       el("span", {}, `fit: ${layer.fit}`),
       layer.fit === "contain" ? el("span", {}, `scale: ${Math.round(layer.scale * 100)}% of canvas`) : "",
+      layer.fit === "anchor" ? el("span", {}, `sits on ${layer.on} anchor "${layer.anchor}" · width ×${layer.widthScale} · overlap ${Math.round(layer.overlap * 100)}%`) : "",
       el("span", {}, `total weight: ${layer.totalWeight}`)),
     el("table", {},
       el("thead", {}, el("tr", {}, el("th", {}, ""), el("th", {}, "Trait"), el("th", {}, "Key"), el("th", { class: "num" }, "Weight"), el("th", { class: "num" }, "Odds"), el("th", {}, ""), el("th", {}, "Size"), el("th", {}, "File"))),
       el("tbody", {}, layer.traits.map((t) => el("tr", {},
-        el("td", {}, el("img", { src: t.file, alt: "", width: 32, height: 32, loading: "lazy", class: layer.fit === "contain" ? "clear" : "" })),
+        el("td", {}, t.file ? el("img", { src: t.file, alt: "", width: 32, height: 32, loading: "lazy", class: layer.fit !== "fill" ? "clear" : "" }) : ""),
         el("td", {}, t.name),
         el("td", {}, el("code", {}, t.key)),
         el("td", { class: "num" }, t.weight),
         el("td", { class: "num" }, pct(t.pct)),
         el("td", {}, el("span", { class: "bar" }, el("i", { style: `width:${t.pct}%` }))),
         el("td", {}, t.dims ? `${t.dims.width}×${t.dims.height}` : "–"),
-        el("td", {}, el("code", {}, t.file))))))));
+        el("td", {}, t.file ? el("code", {}, t.file) : el("span", { class: "muted" }, "absent on this token"))))))));
 });
 
 // ---- collection ----

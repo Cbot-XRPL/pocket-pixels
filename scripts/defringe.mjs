@@ -12,8 +12,9 @@ import sharp from "sharp";
 import { layerPath } from "./lib/compose.mjs";
 
 const [trait, ...flags] = process.argv.slice(2);
-if (!trait) { console.error("usage: node scripts/defringe.mjs <trait> [--dry]"); process.exit(1); }
-const file = layerPath("character", trait);
+if (!trait) { console.error("usage: node scripts/defringe.mjs <trait> [--layer character] [--dry]"); process.exit(1); }
+const layer = flags.includes("--layer") ? flags[flags.indexOf("--layer") + 1] : "character";
+const file = layerPath(layer, trait);
 const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 const W = info.width, H = info.height;
 const src = Buffer.from(data);

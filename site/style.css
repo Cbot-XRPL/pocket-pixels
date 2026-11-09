@@ -145,3 +145,6 @@ td img { width: 32px; height: 32px; border-radius: 6px; background: var(--plate)
   .builder { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; }
   .tokens { grid-template-columns: repeat(6, 1fr); }
 }
+
+.chip-none { width: 44px; height: 44px; border-radius: 8px; border: 1px dashed var(--line); display: grid; place-items: center; color: var(--muted); }
+.muted { color: var(--muted); }

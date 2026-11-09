@@ -17,6 +17,7 @@ plate `#0F3D8A`, no glow. Together they are the CCLU app icon.
 | -------------------------- | ------------------------------------------------------ |
 | `layers/background/*.png`  | Background panes, 1024x1024, rounded plate with alpha. |
 | `layers/character/*.png`   | Characters on transparent backgrounds.                 |
+| `layers/hat/*.png`         | Hats, tight-cropped so the bottom edge is the brim.    |
 | `layers/layers.json`       | Layer order, trait names, character scale.             |
 | `scripts/compose.mjs`      | Composites a character onto a background into `out/`.  |
 | `scripts/generate.mjs`     | Builds the collection: weighted draws, PNG + metadata. |
@@ -54,7 +55,8 @@ CCLU preview proxy.
 npm install
 npm run compose                      # squid on ink-blue -> out/
 npm run compose -- squid ink-glow-grid
-npm run compose:all                  # every background x character
+npm run compose -- robot ink-blue beanie
+npm run compose:all                  # every background x character, plus every hat on ink-blue
 ```
 
 ## Generate the collection
@@ -141,6 +143,20 @@ the turquoise squid) change, so eyes, suckers and outlines stay put.
 | `squid-grey` | 15     | Desaturated slate grey.                |
 | `squid-gold` | 10     | Warm gold, the rare one.               |
 | `robot`      | 30     | Boxy turquoise robot, same palette.    |
+
+## Hats
+
+| Trait    | Weight | Look                                            |
+| -------- | ------ | ----------------------------------------------- |
+| `none`   | 60     | No hat.                                         |
+| `beanie` | 40     | Navy knit beanie, turquoise brim stripe, cream pom. |
+
+Hats sit on each character's `hat` anchor (width ×1.1, sunk 28% of their
+height), so the same PNG fits the squid's mantle and the robot's head.
+Characters are drawn at 72% of the canvas and nudged down 6% to leave headroom.
+
+![squid in a beanie](examples/squid-beanie-on-ink-blue.png)
+![robot in a beanie](examples/robot-beanie-on-ink-blue.png)
 
 ## Style rules
 

@@ -35,7 +35,9 @@ export function placement(manifest, layer, meta) {
   const box = Math.round(size * (cfg.scale ?? 1));
   const k = Math.min(box / meta.width, box / meta.height);
   const width = Math.round(meta.width * k), height = Math.round(meta.height * k);
-  return { left: Math.round((size - width) / 2), top: Math.round((size - height) / 2), width, height, k };
+  // offsetY (fraction of canvas) nudges the layer down to leave headroom for hats.
+  const top = Math.round((size - height) / 2 + size * (cfg.offsetY ?? 0));
+  return { left: Math.round((size - width) / 2), top, width, height, k };
 }
 
 /**
@@ -70,8 +72,14 @@ export async function render(manifest, combo) {
       const height = Math.round(meta.height * (width / meta.width));
       const cx = hostPlace.left + anchor.x * hostPlace.k;
       const bottom = hostPlace.top + anchor.y * hostPlace.k + height * (cfg.overlap ?? 0.15);
-      const img = await sharp(file).resize(width, height, { fit: "fill", kernel: "nearest" }).toBuffer();
-      overlays.push({ input: img, left: Math.round(cx - width / 2), top: Math.round(bottom - height) });
+      let img = sharp(await sharp(file).resize(width, height, { fit: "fill", kernel: "nearest" }).toBuffer());
+      let left = Math.round(cx - width / 2), top = Math.round(bottom - height);
+      // Clip to the canvas: sharp refuses overlays that hang past the edge.
+      const cl = Math.max(0, -left), ct = Math.max(0, -top);
+      const cw = Math.min(width - cl, size - Math.max(0, left)), ch = Math.min(height - ct, size - Math.max(0, top));
+      if (cw <= 0 || ch <= 0) continue;
+      if (cl || ct || cw !== width || ch !== height) img = img.extract({ left: cl, top: ct, width: cw, height: ch });
+      overlays.push({ input: await img.toBuffer(), left: Math.max(0, left), top: Math.max(0, top) });
       continue;
     }
     if (cfg.fit === "contain") {

@@ -1,6 +1,9 @@
 // Cut a character out of a flat-colour background and save it as a trait.
 //
-//   node scripts/cutout.mjs <image> <trait> [--tolerance 70] [--pad 0.04]
+//   node scripts/cutout.mjs <image> <trait> [--layer character] [--tolerance 70] [--pad 0.04] [--tight 1]
+//
+// --tight keeps the exact opaque bounds (no squaring): use it for accessories
+// whose bottom edge must be the seat line (hat brims).
 //
 // The key colour is sampled from the four corners. Pixels within --tolerance
 // (RGB distance) of it become transparent; the result is cropped to the
@@ -12,8 +15,8 @@ import { layerPath } from "./lib/compose.mjs";
 
 const [src, trait, ...rest] = process.argv.slice(2);
 if (!src || !trait) { console.error("usage: node scripts/cutout.mjs <image> <trait> [--tolerance N] [--pad F]"); process.exit(1); }
-const opt = {}; for (let i = 0; i < rest.length; i += 2) opt[rest[i].replace(/^--/, "")] = Number(rest[i + 1]);
-const tol = opt.tolerance ?? 70, padF = opt.pad ?? 0.04;
+const opt = {}; for (let i = 0; i < rest.length; i += 2) opt[rest[i].replace(/^--/, "")] = rest[i + 1];
+const tol = Number(opt.tolerance ?? 70), padF = Number(opt.pad ?? 0.04), layer = opt.layer ?? "character", tight = opt.tight === "1";
 
 const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 const W = info.width, H = info.height, at = (x, y) => (y * W + x) * 4;
@@ -41,10 +44,15 @@ for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = at(x, y); if
 console.log("enclosed key pixels cleared:", pockets);
 let x0 = W, y0 = H, x1 = 0, y1 = 0, opaque = 0;
 for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[at(x, y) + 3]) { opaque++; x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-const bw = x1 - x0 + 1, bh = y1 - y0 + 1, side = Math.round(Math.max(bw, bh) * (1 + padF * 2));
-const left = Math.round((side - bw) / 2), top = Math.round((side - bh) / 2);
-console.log({ bounds: { x0, y0, w: bw, h: bh }, opaque, square: side });
+const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
 const cropped = await sharp(data, { raw: { width: W, height: H, channels: 4 } }).extract({ left: x0, top: y0, width: bw, height: bh }).png().toBuffer();
-const out = await sharp({ create: { width: side, height: side, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: cropped, left, top }]).png().toBuffer();
-await writeFile(layerPath("character", trait), out);
-console.log("wrote", `layers/character/${trait}.png`, `${side}x${side}`);
+let out = cropped, outW = bw, outH = bh;
+if (!tight) {
+  const side = Math.round(Math.max(bw, bh) * (1 + padF * 2));
+  const left = Math.round((side - bw) / 2), top = Math.round((side - bh) / 2);
+  out = await sharp({ create: { width: side, height: side, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: cropped, left, top }]).png().toBuffer();
+  outW = outH = side;
+}
+console.log({ bounds: { x0, y0, w: bw, h: bh }, opaque, tight });
+await writeFile(layerPath(layer, trait), out);
+console.log("wrote", `layers/${layer}/${trait}.png`, `${outW}x${outH}`);
