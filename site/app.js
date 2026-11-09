@@ -181,7 +181,9 @@ $("#fit-cancel").addEventListener("click", () => exitFit(true));
 async function saveFit(fit) {
   const { layer, trait, character } = fitState;
   fitStatus.textContent = "Saving…";
-  const r = await fetch("api/fit", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ layer, trait, character, fit }) });
+  // text/plain on purpose: a JSON content-type gets consumed by the CCLU
+  // preview proxy's body parser and arrives empty. The server parses it anyway.
+  const r = await fetch("api/fit", { method: "POST", headers: { "content-type": "text/plain" }, body: JSON.stringify({ layer, trait, character, fit }) });
   if (!r.ok) { fitStatus.textContent = `Failed: ${await r.text()}`; return; }
   info = await (await fetch("api/manifest")).json();
   exitFit(true);
