@@ -48,7 +48,7 @@ for (let i = 0; i < data.length; i += 4) {
   if (s < 0.04 || (!inBand && !tintedHighlight)) continue;
   if (hue !== null) h = hue;
   s = Math.min(1, s * sat);
-  l = Math.min(1, l * light);
+  if (inBand) l = Math.min(1, l * light); // highlights keep their lightness, so they never blow out to pure white
   [data[i], data[i + 1], data[i + 2]] = hsl2rgb(h, s, l);
   touched++;
 }

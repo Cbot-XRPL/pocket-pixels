@@ -130,6 +130,7 @@ should be hard.
 ```sh
 node scripts/recolor.mjs squid squid-gold --hue 45 --light 1.14   # shift the accent hue
 node scripts/recolor.mjs squid squid-grey --sat 0.05 --light 1.05  # desaturate
+node scripts/recolor.mjs squid squid-orange --hue 15 --sat 0.8 --light 1.2  # Claude orange
 ```
 
 Only pixels in the source's accent hue band (`--range`, default 150-205 for
@@ -139,10 +140,11 @@ the turquoise squid) change, so eyes, suckers and outlines stay put.
 
 | Trait        | Weight | Look                                   |
 | ------------ | ------ | -------------------------------------- |
-| `squid`      | 45     | The original turquoise `#2EE6D6` squid. |
-| `squid-grey` | 15     | Desaturated slate grey.                |
-| `squid-gold` | 10     | Warm gold, the rare one.               |
-| `robot`      | 30     | Boxy turquoise robot, same palette.    |
+| `squid`      | 40     | The original turquoise `#2EE6D6` squid. |
+| `squid-grey` | 12     | Desaturated slate grey.                |
+| `squid-gold` | 8      | Warm gold, the rare one.               |
+| `squid-orange` | 12   | Claude orange `#D97757`, terracotta.   |
+| `robot`      | 28     | Boxy turquoise robot, same palette.    |
 
 ## Hats
 
