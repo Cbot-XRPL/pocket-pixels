@@ -49,6 +49,14 @@ and trait with its weight, odds and file, and the last generated collection
 with a Generate button. All URLs are relative, so it also works behind the
 CCLU preview proxy.
 
+### Themes
+
+The header's Theme selector swaps the page palette and a hero banner (Ink,
+Christmas, Japan, Japan · Christmas). Banners live in `site/assets/themes/`,
+palettes in `site/style.css` under `:root[data-theme=...]`, the list in
+`site/app.js` `THEMES`. The choice persists in the browser; `?theme=japan`
+forces one. Themes never touch the artwork or the plate colour.
+
 ## Render
 
 ```sh

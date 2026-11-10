@@ -85,7 +85,7 @@ async function sendFile(res, abs) {
 }
 
 // Only serve files from these roots, never anything else on disk.
-const PUBLIC = { "examples/": path.join(root, "examples"), "layers/": path.join(root, "layers"), "build/images/": path.join(root, "build/images"), "build/metadata/": path.join(root, "build/metadata") };
+const PUBLIC = { "assets/": path.join(here, "assets"), "examples/": path.join(root, "examples"), "layers/": path.join(root, "layers"), "build/images/": path.join(root, "build/images"), "build/metadata/": path.join(root, "build/metadata") };
 
 function parseCombo(m, params) {
   const combo = {};

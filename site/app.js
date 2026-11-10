@@ -12,6 +12,30 @@ const el = (tag, attrs = {}, ...kids) => {
 const title = (s) => s.replace(/(^|-)(\w)/g, (_, d, c) => (d ? " " : "") + c.toUpperCase());
 const pct = (n) => `${n.toFixed(n < 10 ? 1 : 0)}%`;
 
+// ---- themes ----
+// A theme is a palette (CSS variables on <html data-theme>) plus a hero
+// banner. The choice persists in localStorage; "ink" is the plain default.
+const THEMES = {
+  ink: { label: "Ink", banner: null },
+  christmas: { label: "Christmas", banner: "assets/themes/christmas.jpg", caption: "Cozy Christmas room, snow over the mountains" },
+  japan: { label: "Japan", banner: "assets/themes/japan.jpg", caption: "Tatami room at dusk, Fuji and sakura" },
+  "japan-christmas": { label: "Japan · Christmas", banner: "assets/themes/japan-christmas.jpg", caption: "Tatami room at Christmas, snow over Fuji" },
+};
+const themeSelect = $("#theme");
+function applyTheme(id) {
+  if (!THEMES[id]) id = "ink";
+  const t = THEMES[id];
+  document.documentElement.dataset.theme = id;
+  const banner = $("#banner");
+  if (t.banner) { $("#banner-img").src = t.banner; $("#banner-img").alt = t.caption; $("#banner-cap").textContent = t.caption; banner.hidden = false; }
+  else banner.hidden = true;
+  themeSelect.value = id;
+  try { localStorage.setItem("pp-theme", id); } catch {}
+}
+let savedTheme = "ink"; try { savedTheme = localStorage.getItem("pp-theme") || "ink"; } catch {}
+applyTheme(new URLSearchParams(location.search).get("theme") || savedTheme);
+themeSelect.addEventListener("change", () => applyTheme(themeSelect.value));
+
 let info = await (await fetch("api/manifest")).json();
 const pick = {};
 let fitting = false, fitState = null; // fit editor state, declared early: updatePreview() reads it

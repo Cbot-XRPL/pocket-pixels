@@ -16,10 +16,22 @@
     <a href="#layers">Layers</a>
     <a href="#collection">Collection</a>
   </nav>
+  <label class="theme-pick"><span class="theme-label">Theme</span>
+    <select id="theme" aria-label="Theme preview">
+      <option value="ink">Ink</option>
+      <option value="christmas">Christmas</option>
+      <option value="japan">Japan</option>
+      <option value="japan-christmas">Japan · Christmas</option>
+    </select>
+  </label>
 </header>
 
 <main class="wrap">
   <section class="hero">
+    <figure class="banner" id="banner" hidden>
+      <img id="banner-img" alt="" width="1280" height="720">
+      <figcaption id="banner-cap"></figcaption>
+    </figure>
     <p class="eyebrow">Pixel-art NFT collection</p>
     <h1>Pocket Pixels</h1>
     <p class="lede" id="lede">Layered PNG traits, composited with nearest-neighbour scaling so every pixel stays square.</p>
